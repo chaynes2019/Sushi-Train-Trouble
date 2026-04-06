@@ -49,11 +49,21 @@ class Reaction():
     for reactant in self._reactantsDict:
       idx = entityList.index(reactant)
 
-      reactantConcentration = y[idx]
+      if(self._name == "Reaction 30: M_empty + g * phi -> M_empty BAD"):
+        reactantConcentration = 0
+      else:
+        reactantConcentration = y[idx]
       reactantMultiplicity = self._reactantsDict[reactant]
 
       rxnRate *= (reactantConcentration ** reactantMultiplicity)
 
+      if(self._name == "Reaction 30: M_empty + g * phi -> M_empty BAD"):
+        print(f"Reactant Concentration Product = {(reactantConcentration ** reactantMultiplicity)}")
+
     rxnRate *= self._rxnK
 
-    return rxnRate
+    if (self._name == "Reaction 30: M_empty + g * phi -> M_empty"):
+      return int(rxnRate)
+    
+    else:
+      return rxnRate

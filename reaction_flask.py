@@ -77,13 +77,19 @@ class ReactionFlask():
     reactionObjects = self._reactions.values()
 
     for rxnIdx, rxn in enumerate(reactionObjects):
+      '''if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi"):
+        print(f"Reaction Rate = {rxn.computeRxnRate(self._entityList, y)}")'''
+
       for reactant in rxn._reactants:
         idx = self._entityList.index(reactant)
 
         #The net change is reported in the netChanges vector, which can then
         # be used, through the index obtained from the entityList, to have
         # the right reaction rate in the concentration
-        derivative[idx] += rxn._netChanges[idx] * rxnRates[rxnIdx]
+        derivativeChange = rxn._netChanges[idx] * rxnRates[rxnIdx]
+        if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi"):
+          print(f"Reactant Change = {derivativeChange}")
+        derivative[idx] = derivative[idx] + derivativeChange
 
       for product in rxn._products:
         idx = self._entityList.index(product)
@@ -91,6 +97,9 @@ class ReactionFlask():
         #The net change is reported in the netChanges vector, which can then
         # be used, through the index obtained from the entityList, to have
         # the right reaction rate in the concentration
+        derivativeChange = rxn._netChanges[idx] * rxnRates[rxnIdx]
+        if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi"):
+          print(f"Product Change = {derivativeChange}")
         derivative[idx] += rxn._netChanges[idx] * rxnRates[rxnIdx]
 
     return derivative

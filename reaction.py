@@ -8,13 +8,13 @@ class Reaction():
     self._productsDict = productsDict
     self._products = list(self._productsDict.keys())
 
-    self._netChanges = self.computeNetChanges(entityList)
+    self._changes = self.computeChanges(entityList)
 
     self._rxnK = rxnK
 
     self._name = name
 
-  def computeNetChanges(self, entityList):
+  def computeChanges(self, entityList):
     #1: Set up vectors that are the length of the entity list
     # to catalog the number of the different reactants and
     # products present
@@ -41,7 +41,7 @@ class Reaction():
     #4: Now, their subtraction will yield the net difference in materials
     netChanges = productsMultiplicities - reactantsMultiplicities
 
-    return netChanges
+    return (reactantsMultiplicities, productsMultiplicities)
 
   def computeRxnRate(self, entityList, y):
     rxnRate = 1
@@ -49,21 +49,14 @@ class Reaction():
     for reactant in self._reactantsDict:
       idx = entityList.index(reactant)
 
-      if(self._name == "Reaction 30: M_empty + g * phi -> M_empty BAD"):
-        reactantConcentration = 0
-      else:
-        reactantConcentration = y[idx]
+      reactantConcentration = y[idx]
       reactantMultiplicity = self._reactantsDict[reactant]
 
       rxnRate *= (reactantConcentration ** reactantMultiplicity)
 
-      if(self._name == "Reaction 30: M_empty + g * phi -> M_empty BAD"):
-        print(f"Reactant Concentration Product = {(reactantConcentration ** reactantMultiplicity)}")
+      '''if(self._name == "Reaction 30: M_empty + g * phi -> M_ePhi or M_empty"):
+        print(f"Reactant Concentration Product = {(reactantConcentration ** reactantMultiplicity)}")'''
 
     rxnRate *= self._rxnK
 
-    if (self._name == "Reaction 30: M_empty + g * phi -> M_empty"):
-      return int(rxnRate)
-    
-    else:
-      return rxnRate
+    return rxnRate

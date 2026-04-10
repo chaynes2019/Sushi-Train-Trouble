@@ -3,12 +3,16 @@ import numpy as np
 class Reaction():
   def __init__(self, entityList, name, rxnK, reactantsDict = {}, productsDict = {}):
     self._reactantsDict = reactantsDict
-    self._reactants = list(self._reactantsDict.keys())
-
     self._productsDict = productsDict
-    self._products = list(self._productsDict.keys())
 
-    self._changes = self.computeChanges(entityList)
+    self._changes = None
+
+    self._reactants = None
+    self._products = None
+
+    self.computeReactionSpecies()
+    
+    self.computeChanges(entityList)
 
     self._rxnK = rxnK
 
@@ -20,6 +24,7 @@ class Reaction():
     # products present
     productsMultiplicities = np.zeros(len(entityList))
     reactantsMultiplicities = np.zeros(len(entityList))
+
 
     #2: Search through products and catalog the multiplicities thereof
     # in the appropriate place in the productsMultiplicities vector
@@ -41,22 +46,36 @@ class Reaction():
     #4: Now, their subtraction will yield the net difference in materials
     netChanges = productsMultiplicities - reactantsMultiplicities
 
-    return (reactantsMultiplicities, productsMultiplicities)
+    self._changes = (reactantsMultiplicities, productsMultiplicities)
+  
+  def computeReactionSpecies(self):
+    self._reactants = list(self._reactantsDict.keys())
+    self._products = list(self._productsDict.keys())
 
   def computeRxnRate(self, entityList, y):
     rxnRate = 1
 
     for reactant in self._reactantsDict:
+      #Retrieve index of reactant in entity list b/c
+      #entityList is a list of reactant names
       idx = entityList.index(reactant)
 
+      #Use this index to get the concentration from y,
+      #because y has the same shape as entityList
       reactantConcentration = y[idx]
+
+      #Get the multiplicity of the reactant in the reaction
+      #using the value given in reactantsDict
       reactantMultiplicity = self._reactantsDict[reactant]
 
+      #For aA + bB -> P, Reaction Rate = k_rxn * [A]^a * [B]^b
+      #So, first form product of [A]^a, [B]^b, etc.
       rxnRate *= (reactantConcentration ** reactantMultiplicity)
 
       '''if(self._name == "Reaction 30: M_empty + g * phi -> M_ePhi or M_empty"):
         print(f"Reactant Concentration Product = {(reactantConcentration ** reactantMultiplicity)}")'''
 
+    #Now, multiply resultant product by k_rxn, the reaction constant
     rxnRate *= self._rxnK
 
     return rxnRate

@@ -86,12 +86,12 @@ class ReactionFlask():
       for reactant in rxn._reactants:
         idx = self._entityList.index(reactant)
 
-        #The net change is reported in the netChanges vector, which can then
-        # be used, through the index obtained from the entityList, to have
-        # the right reaction rate in the concentration
+        #The change in reactants reported in the first element of the changes vector,
+        # which can then be used, through the index obtained from the entityList,
+        # to have the right reaction rate in the concentration
         derivativeChange = -reactantChanges[idx] * rxnRates[rxnIdx]
-        '''if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi or M_empty"):
-          print(f"Reactant Changes = {-reactantChanges[idx]}")'''
+        if(rxn._name == "Test Rxn: A + B -> C"):
+          print(f"Reactant Changes = {-reactantChanges[idx]}")
         derivative[idx] = derivative[idx] + derivativeChange
 
       for product in rxn._products:
@@ -101,8 +101,8 @@ class ReactionFlask():
         # be used, through the index obtained from the entityList, to have
         # the right reaction rate in the concentration
         derivativeChange = productChanges[idx] * rxnRates[rxnIdx]
-        '''if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi or M_empty"):
-          print(f"Product Change = {productChanges[idx]}")'''
+        if(rxn._name == "Test Rxn: A + B -> C"):
+          print(f"Product Change = {productChanges[idx]}")
         derivative[idx] = derivative[idx] + derivativeChange
 
     return derivative
@@ -226,6 +226,10 @@ class ReactionFlask():
 
     if newRxnReactantsDict != None:
       reactionInQuestion._reactantsDict = newRxnReactantsDict
+      reactionInQuestion.computeReactionSpecies()
+      reactionInQuestion.computeChanges(self._entityList)
 
     if newRxnProductsDict != None:
       reactionInQuestion._productsDict = newRxnProductsDict
+      reactionInQuestion.computeReactionSpecies()
+      reactionInQuestion.computeChanges(self._entityList)

@@ -36,19 +36,56 @@ class Reaction():
         )
       )
     
-    if type(reactantsDict) != dict[str, float] and type(reactantsDict) != dict[str, int]:
+    if (reactantsDict == None):
       raise(
-        ValueError(
-          "The reactants dictionary has keys which are not strings or values which are not floats"
+          TypeError(
+            "The reactants dictionary is of None Type"
+          )
         )
-      )
     
-    if type(productsDict) != dict[str, float] and type(productsDict) != dict[str, int]:
+    else:
+      for reactant in list(reactantsDict.keys()):
+        if type(reactant) != str:
+          raise(
+            ValueError(
+              "The reactants dictionary has keys which are not strings or values which are not floats"
+            )
+          )
+        
+        reactantMultiplicity = reactantsDict[reactant]
+
+        if type(reactantMultiplicity) != int and type(reactantMultiplicity) != float:
+          raise(
+                ValueError(
+                  "The reactants dictionary has keys which are not strings or values which are not floats"
+                )
+              )
+    
+    if (productsDict == None):
       raise(
-        ValueError(
-          "The products dictionary has keys which are not strings or values which are not floats"
+          TypeError(
+            "The products dictionary is of None Type"
+          )
         )
-      )
+    
+    else:
+      for product in list(productsDict.keys()):
+        if type(product) != str:
+          raise(
+            ValueError(
+              "The products dictionary has keys which are not strings or values which are not floats"
+            )
+          )
+        
+        productMultiplicity = productsDict[product]
+
+        if type(productMultiplicity) != int and type(productMultiplicity) != float:
+          raise(
+                ValueError(
+                  "The products dictionary has keys which are not strings or values which are not floats"
+                )
+              )
+
     
     #The Reactants Dictionary stores the information
     # about the reactants involved and their relative

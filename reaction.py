@@ -29,26 +29,47 @@ class Reaction():
             )
           )
     
-    if type(rxnK) != float or type(rxnK) != int:
+    if type(rxnK) != float and type(rxnK) != int:
       raise(
         ValueError(
           "The reaction rate (i.e., reaction constant) is not a float!"
         )
       )
     
-    if type(reactantsDict) != dict[str, float] or type(reactantsDict) != dict[str, int]:
-      raise(
-        ValueError(
-          "The reactants dictionary has keys which are not strings or values which are not floats"
+    for reactant in list(reactantsDict.keys()):
+      if type(reactant) != str:
+        raise(
+          ValueError(
+            "The reactants dictionary has keys which are not strings or values which are not floats"
+          )
         )
-      )
+      
+      reactantMultiplicity = reactantsDict[reactant]
+
+      if type(reactantMultiplicity) != int and type(reactantMultiplicity) != float:
+        raise(
+              ValueError(
+                "The reactants dictionary has keys which are not strings or values which are not floats"
+              )
+            )
     
-    if type(productsDict) != dict[str, float] or type(productsDict) != dict[str, int]:
-      raise(
-        ValueError(
-          "The products dictionary has keys which are not strings or values which are not floats"
+    for product in list(productsDict.keys()):
+      if type(product) != str:
+        raise(
+          ValueError(
+            "The products dictionary has keys which are not strings or values which are not floats"
+          )
         )
-      )
+      
+      productMultiplicity = productsDict[product]
+
+      if type(productMultiplicity) != int and type(productMultiplicity) != float:
+        raise(
+              ValueError(
+                "The products dictionary has keys which are not strings or values which are not floats"
+              )
+            )
+
     
     #The Reactants Dictionary stores the information
     # about the reactants involved and their relative

@@ -1,4 +1,8 @@
 dictOfInterest = {'A' : 1,
                   'B' : 1}
 
-print(type(dictOfInterest) == dict[str : int])
+reactionDictionary = dict[int : str]
+
+meep = {1 : 'Alpha', 2 : 'Omega'}
+
+print(type(meep))

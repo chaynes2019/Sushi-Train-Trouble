@@ -36,39 +36,67 @@ class Reaction():
         )
       )
     
-    for reactant in list(reactantsDict.keys()):
-      if type(reactant) != str:
-        raise(
-          ValueError(
-            "The reactants dictionary has keys which are not strings or values which are not floats"
+    if (reactantsDict == None):
+      raise(
+          TypeError(
+            "The reactants dictionary is of None Type"
           )
         )
-      
-      reactantMultiplicity = reactantsDict[reactant]
-
-      if type(reactantMultiplicity) != int and type(reactantMultiplicity) != float:
-        raise(
-              ValueError(
-                "The reactants dictionary has keys which are not strings or values which are not floats"
-              )
-            )
     
-    for product in list(productsDict.keys()):
-      if type(product) != str:
-        raise(
-          ValueError(
-            "The products dictionary has keys which are not strings or values which are not floats"
+    else:
+      for reactant in list(reactantsDict.keys()):
+        if type(reactant) != str:
+          raise(
+            ValueError(
+              "The reactants dictionary has keys which are not strings or values which are not floats"
+            )
+          )
+        
+        reactantMultiplicity = reactantsDict[reactant]
+
+        if type(reactantMultiplicity) != int and type(reactantMultiplicity) != float:
+          raise(
+                ValueError(
+                  "The reactants dictionary has keys which are not strings or values which are not floats"
+                )
+              )
+        elif reactantMultiplicity < 0:
+          raise(
+            ValueError(
+              "The reactants dictionary has a negative multiplicity value"
+            )
+          )
+    
+    if (productsDict == None):
+      raise(
+          TypeError(
+            "The products dictionary is of None Type"
           )
         )
-      
-      productMultiplicity = productsDict[product]
-
-      if type(productMultiplicity) != int and type(productMultiplicity) != float:
-        raise(
-              ValueError(
-                "The products dictionary has keys which are not strings or values which are not floats"
-              )
+    
+    else:
+      for product in list(productsDict.keys()):
+        if type(product) != str:
+          raise(
+            ValueError(
+              "The products dictionary has keys which are not strings or values which are not floats"
             )
+          )
+        
+        productMultiplicity = productsDict[product]
+
+        if type(productMultiplicity) != int and type(productMultiplicity) != float:
+          raise(
+                ValueError(
+                  "The products dictionary has keys which are not strings or values which are not floats"
+                )
+              )
+        elif productMultiplicity < 0:
+          raise(
+            ValueError(
+              "The products dictionary has a negative multiplicity value"
+            )
+          )
 
     
     #The Reactants Dictionary stores the information

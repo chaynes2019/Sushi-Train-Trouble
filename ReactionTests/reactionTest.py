@@ -60,6 +60,12 @@ class Reaction():
                   "The reactants dictionary has keys which are not strings or values which are not floats"
                 )
               )
+        elif reactantMultiplicity < 0:
+          raise(
+            ValueError(
+              "The reactants dictionary has a negative multiplicity value"
+            )
+          )
     
     if (productsDict == None):
       raise(
@@ -85,6 +91,12 @@ class Reaction():
                   "The products dictionary has keys which are not strings or values which are not floats"
                 )
               )
+        elif productMultiplicity < 0:
+          raise(
+            ValueError(
+              "The products dictionary has a negative multiplicity value"
+            )
+          )
 
     
     #The Reactants Dictionary stores the information

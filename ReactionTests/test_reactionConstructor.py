@@ -20,3 +20,15 @@ def test_NoneReactantsDictInput():
 def test_NoneProductsDictInput():
     with pytest.raises(TypeError):
         testReaction = Reaction(['A', 'B', 'C'], "Test Rxn", 1, reactantsDict={'A' : 1, 'B' : 1}, productsDict=None)
+
+def test_nullEntityListInput():
+    testReaction = Reaction([], "Test Rxn", 1, reactantsDict = {}, productsDict = {})
+
+def test_inputCharacterForMultiplicity():
+    with pytest.raises(ValueError):
+        testReaction = Reaction(['A', 'B', 'C'], "Test Rxn", 1, reactantsDict = {'A' : 'a', 'B' : 1}, productsDict = {'C' : 1})
+
+def test_inputNegativeValueForMultiplicity():
+    with pytest.raises(ValueError):
+        testReaction = Reaction(['A', 'B', 'C'], "Test Rxn", 1, reactantsDict = {'A' : -1, 'B' : 1}, productsDict = {'C' : 1})
+

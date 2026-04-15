@@ -8,7 +8,24 @@ from reactionTest import Reaction
 class ReactionFlask():
   def __init__(self, entityList, components):
     self._entityList = entityList
+
+    for entity in self._entityList:
+      if type(entity) != str:
+        raise(
+          TypeError(
+            "The entity list contains non-string elements"
+          )
+        )
+
     self._components = components
+
+    for component in self._components:
+      if type(component) != str:
+        raise(
+          TypeError(
+            "A component key has a non-string value"
+          )
+        )
 
     self._concentrations = np.zeros(len(self._entityList))
     self._initialCondition = None
@@ -21,6 +38,13 @@ class ReactionFlask():
     self.latestSimulationOutput = None
 
   def setInitialCondition(self, y0):
+    if y0 == None:
+      raise(
+        TypeError(
+          "y0 has type None"
+        )
+      )
+
     if len(y0) != len(self._concentrations):
       raise ValueError("y0 and the entity list have different dimensions")
 
@@ -71,7 +95,7 @@ class ReactionFlask():
     #3: For each reaction, go to each reactant
     #  and add the change (# / s) to its respective derivative
 
-    #Because the reactions member is now a dictionary,
+    #Because the reactions member is a dictionary,
     #to iterate through the reactions, one now must
     #use the values
     reactionObjects = self._reactions.values()

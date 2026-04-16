@@ -37,7 +37,24 @@ class ReactionFlask():
 
     self.latestSimulationOutput = None
 
-  def setInitialCondition(self, y0):
+  def setInitialCondition(self : ReactionFlask, 
+                          y0 : list[float]) -> None:
+    '''This function takes in an initial condition for
+    the biochemical reaction network in the form of a
+    list of values, each one corresponding to a species
+    (that is, an entity) in the reaction network and
+    fixes that as a value for runSystem() to automatically
+    use upon being called.
+    
+    Note: this could be called multiple times on the same
+    ReactionFlask within a loop; for example, if one was
+    interested in seeing how changing the initial value
+    of one of the system's species changed the outcome,
+    one could call this function with the new initial
+    condition within each loop, without having to create
+    a new ReactionFlask object.'''
+
+    #Prevent y0 from having type None
     if y0 == None:
       raise(
         TypeError(
@@ -45,11 +62,21 @@ class ReactionFlask():
         )
       )
 
+    #Because the ReactionFlask's concentrations list is
+    # initialized based on the length of the entity list
+    # a mismatch between the lengths of these vectors
+    # implies that an entity/reaction species has been
+    # forgotten
     if len(y0) != len(self._concentrations):
       raise ValueError("y0 and the entity list have different dimensions")
 
     self._initialCondition = np.array(y0)
 
+    #While the structure of the differential equations
+    # negative values, the biological interpretation of
+    # the biochemical reaction network favors enforcing
+    # an initial condition with non-negative values, to
+    # help avoid error
     for val in y0:
       if val < 0:
         raise(
@@ -57,12 +84,29 @@ class ReactionFlask():
             "y0 has been initialized with negative values"
           )
         )
-
+    
+    #Map y0 values into the concentrations list:
+    # this prepares the ReactionFlask to be run w/
+    # runSystem()
     self._concentrations = [y0[k] for k in range(len(y0))]
+
+    #This flag ensures that the system is not run
+    # before being initialized
     self._concentrationsInitialized = True
 
-  def resetInitialCondition(self):
+  def resetInitialCondition(self : ReactionFlask) -> None:
+    '''This function remaps the initial condition to the
+    ReactionFlask's concentration list in order to
+    reinitialize the system. This is useful to call when
+    one is running the system repeatedly with the same
+    initial conditions, perhaps changing the value of a
+    parameter on each iteration.'''
+
+    #Remap y0 values, stored in _initialCondition,
+    # to the system's concentrations list
     self._concentrations = self._initialCondition
+
+    #Reset this flag so the system can be rerun
     self._concentrationsInitialized = True
 
   def addReaction(self, name, rxnK, reactantsDict, productsDict):

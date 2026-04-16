@@ -20,3 +20,7 @@ def test_positiveInitialCondition():
     testReactionFlask.setInitialCondition([1, 2, 3])
 
     assert (testReactionFlask._initialCondition == [1, 2, 3]).all()
+
+def test_mismatchedLength():
+    with pytest.raises(ValueError, match = "y0 and the entity list have different dimensions"):
+        testReactionFlask.setInitialCondition([1])

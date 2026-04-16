@@ -78,6 +78,13 @@ class ReactionFlask():
     # an initial condition with non-negative values, to
     # help avoid error
     for val in y0:
+      if val == None:
+        raise(
+          TypeError(
+            "y0 has a None value"
+          )
+        )
+
       if val < 0:
         raise(
           ValueError(
@@ -102,12 +109,21 @@ class ReactionFlask():
     initial conditions, perhaps changing the value of a
     parameter on each iteration.'''
 
-    #Remap y0 values, stored in _initialCondition,
-    # to the system's concentrations list
-    self._concentrations = self._initialCondition
+    try:
+      if self._initialCondition == None:
+        raise(
+          TypeError(
+            "Initial condition has not yet been set"
+          )
+        )
+    except(ValueError):
 
-    #Reset this flag so the system can be rerun
-    self._concentrationsInitialized = True
+      #Remap y0 values, stored in _initialCondition,
+      # to the system's concentrations list
+      self._concentrations = self._initialCondition
+
+      #Reset this flag so the system can be rerun
+      self._concentrationsInitialized = True
 
   def addReaction(self, name, rxnK, reactantsDict, productsDict):
     reactants = list(reactantsDict.keys())

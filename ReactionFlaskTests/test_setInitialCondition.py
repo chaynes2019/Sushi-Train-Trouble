@@ -24,3 +24,7 @@ def test_positiveInitialCondition():
 def test_mismatchedLength():
     with pytest.raises(ValueError, match = "y0 and the entity list have different dimensions"):
         testReactionFlask.setInitialCondition([1])
+
+def test_InitialNoneValues():
+    with pytest.raises(TypeError, match = "y0 has a None value"):
+        testReactionFlask.setInitialCondition([None, None, None])

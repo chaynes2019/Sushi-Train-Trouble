@@ -50,6 +50,13 @@ class ReactionFlask():
 
     self._initialCondition = np.array(y0)
 
+    for val in y0:
+      if val < 0:
+        raise(
+          ValueError(
+            "y0 has been initialized with negative values"
+          )
+        )
 
     self._concentrations = [y0[k] for k in range(len(y0))]
     self._concentrationsInitialized = True

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import re
 
 from reaction_flaskTest import ReactionFlask
 
@@ -26,5 +27,6 @@ def test_addProductOutsideEntityList():
         testRxnFlask.addReaction("A + B -> D", 1, reactantsDict={'A' : 1, 'B' : 1}, productsDict={'D' : 1})
 
 def test_addReactionOfSameName():
-    testRxnFlask.addReaction('A + B -> C', 1, reactantsDict={'A' : 1, 'B' : 1}, productsDict={'C' : 0})
-    assert testRxnFlask._reactions["A + B -> C"]._productsDict == {'C' : 0}
+    name = 'A + B -> C'
+    with pytest.raises(NameError):
+        testRxnFlask.addReaction(name, 1, reactantsDict={'A' : 1, 'B' : 1}, productsDict={'C' : 0})

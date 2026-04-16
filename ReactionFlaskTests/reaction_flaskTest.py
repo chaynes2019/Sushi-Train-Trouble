@@ -1,14 +1,70 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+import re
 
 from reactionTest import Reaction
 
 
 class ReactionFlask():
-  def __init__(self, entityList, components):
-    self._entityList = entityList
+  '''Implementing biochemical reaction network
+  models can be tedious and error-prone.
+  The loss of one negative sign or parameter could
+  lead to dramatically different output, but the
+  models are so complex that noticing such an
+  error is almost out of the question.
+  
+  This class provides a solution to this problem
+  by abstracting the implementation of ODE BRNs.
+  Instead of explicitly writing down the differential
+  equations, the user inputs the species involved in
+  the network, the reactions occurring, and their
+  related rate parameters.
 
+  Then, a flexible framework for simulating and
+  plotting the network's output is given. This
+  facilitates rapid development of a BRN model
+  and allows the user to evaluate its output over
+  a range of parameters with ease.
+
+  For more information on the member attributes
+  of the ReactionFlask class, see the docstring for
+  the class constructor. Enjoy!'''
+
+  def __init__(self : ReactionFlask, 
+               entityList : list[str], 
+               components: dict[str : list[str]]) -> None:
+    '''This constructor requires two inputs to get a
+    Reaction Flask started.
+    
+    1. The entity list, which
+    maintains a record of what entities or reaction
+    species are actually in the reaction network.
+
+
+    2. Components are merely subsets of the entity list
+    that the user desires to have graphed together.
+    PlotSystem() uses the components dictionary to
+    graph subsets of the network on the same plot,
+    but there is no restriction on what subsets can
+    be specified.
+    
+    For example, every reaction species could be 
+    plotted together or individually, or a user 
+    could even partition the entity list into subsets
+    that are mostly distinct but have one or two
+    overlapping species in order to make it easier
+    to compare the rise and fall of associated
+    compounds.
+    
+    While the components feature makes graphing the
+    output of the ReactionFlask much easier, it has
+    no bearing on the simulation of the system itself.'''
+
+    #The following commands check the entity list and
+    # components inputs for any erroneous data types
+    # before they are used for downstream operations
+    self._entityList = entityList
     for entity in self._entityList:
       if type(entity) != str:
         raise(
@@ -27,14 +83,27 @@ class ReactionFlask():
           )
         )
 
+    #The concentrations list can act as a record of the
+    # amount of each reaction species at certain points
+    # in time
     self._concentrations = np.zeros(len(self._entityList))
+
+    #The initial condition list provides a (mutable) vessel
+    # for the user to input an initial value for the system
     self._initialCondition = None
 
-    #Changing this to be a dictionary to make it more readily searchable
+    #The reactions dictionary keeps track of the Reaction
+    # objects that have been added to the system. A user
+    # can easily get a Reaction object by inputting the
+    # reaction's name.
     self._reactions = {}
 
+    #This flag prevents the system from being run before
+    # it is properly initialized with an initial value
     self._concentrationsInitialized = False
 
+    #This variable stores the output from scipy.integrate's
+    # solveIVP function when it is run in reactionDeriv()
     self.latestSimulationOutput = None
 
   def setInitialCondition(self : ReactionFlask, 
@@ -125,10 +194,27 @@ class ReactionFlask():
       #Reset this flag so the system can be rerun
       self._concentrationsInitialized = True
 
-  def addReaction(self, name, rxnK, reactantsDict, productsDict):
+  def addReaction(self : Reaction, 
+                  name : str, 
+                  rxnK : float, 
+                  reactantsDict : dict[str : float], 
+                  productsDict : dict[str : float]) -> None:
+    '''This function adds a new Reaction object
+    to the ReactionFlask's reactions dictionary.
+    It first performs input checking before
+    instantiating the new object.'''
+    
+    #The list of reactant names is generated
+    # from the keys of the reactants dictionary
     reactants = list(reactantsDict.keys())
+
+    #The list of product names is generated
+    # from the keys of the products dictionary
     products = list(productsDict.keys())
 
+    #Check the reactant and product names to
+    # make sure that they are within the scope 
+    # of the reaction network
     for reactant in reactants:
       if reactant not in self._entityList:
         raise(ValueError(f"There is a reaction with {reactants} as reactants, but {reactant} is not in the entity list"))
@@ -136,7 +222,17 @@ class ReactionFlask():
     for product in products:
       if product not in self._entityList:
         raise(ValueError(f"There is a reaction with {products} as products, but {products} is not in the entity list"))
-      
+    
+    #Check to see if Reaction name is 
+    # already used by an existing reaction
+    if name in list(self._reactions.keys()):
+      raise(
+        NameError(
+          f"There is already a reaction of the name \"{name}\""
+        )
+      )
+
+    #Add the new Reaction object
     self._reactions[name] = Reaction(self._entityList, name, rxnK, reactantsDict, productsDict)
 
   def computeReactionRates(self, y):

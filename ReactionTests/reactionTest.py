@@ -1,6 +1,11 @@
 import numpy as np
 
 class Reaction():
+  '''This class is the abstraction of
+  a biochemical reaction, including the
+  reactants and products, their multiplicities,
+  and the reaction rate per unit time.'''
+
   def __init__(self : Reaction, 
                entityList : list[str], 
                name : str, 

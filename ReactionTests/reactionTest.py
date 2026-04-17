@@ -1,11 +1,8 @@
 import numpy as np
 
-class Reaction():
-  '''This class is the abstraction of
-  a biochemical reaction, including the
-  reactants and products, their multiplicities,
-  and the reaction rate per unit time.'''
+type SystemState = list[float]
 
+class Reaction():
   def __init__(self : Reaction, 
                entityList : list[str], 
                name : str, 
@@ -18,7 +15,60 @@ class Reaction():
      parameterized with the information contained in a
      normal chemical reaction equation:
 
-     reactants -> products'''
+     reactants -> products
+     
+    Inputs:
+
+     self (Reaction) : the Reaction object being instantiated
+
+     entityList (list of strings) : a list containing the
+     namestring of the reaction species that are in the
+     biochemical reaction network that contains the Reaction
+     object. The reactants and products that participate in
+     this particular Reaction are a subset of the entityList,
+     but they often do not form the whole entityList.
+
+     name (str) : the namestring of the Reaction. It
+     is often helpful to write out the reaction equation
+     for the reaction being modeled, and then, one uses 
+     that reaction equation as the reaction name.
+     For example, nameRxn = "A + B -> C"
+     
+     rxnK (float) : the reaction rate constant. This
+     value defines how fast the reaction proceeds for
+     every given concentration tuple of the reactants.
+     In the mass-action kinetics term corresponding to
+     the reaction "A + B -> ?", k_rxn * [A]^a * [B]^b,
+     the reaction rate constant is k_rxn. The value of
+     this constant is related to the thermodynamic
+     properties of the reaction and how spontaneously
+     it occurs. If the change in Gibbs free energy between
+     the reactants and products is known, this value can
+     be explicitly calculated as 
+    
+     k_rxn = e^(-(deltaGibbs) / RT)
+
+
+     reactantsDict (dictionary, str -> int/float) : this
+     dictionary contains the namestrings of the reactants
+     as keys and the multiplicities of those reactants as
+     values. Thus, for example, "2A + B -> 3C" would become
+
+     {'A' : 2, 'B' : 1}
+
+
+     productsDict (dictionary, str -> int/float) : this
+     dictionary contains the namestrings of the products
+     as keys and the multiplicities of those products as
+     values. Thus, for example, "2A + B -> 3C" would become
+
+     {'C' : 3}
+     
+     Outputs:
+     
+     None
+     
+     '''
     
     #This section evaluates the inputs to ensure they
     # are of the expected type.
@@ -156,7 +206,31 @@ class Reaction():
     reactant and product dictionaries, this function
     computes and returns the reaction's changes to the 
     systemvariables in a format that is very useful for
-    ReactionFlask's reactionDeriv() function'''
+    ReactionFlask's reactionDeriv() function
+    
+    Inputs:
+
+    self (Reaction) : the Reaction object that is
+    computing changes in reactants and products
+    
+    entityList (list of strings) : a list containing the
+    namestring of the reaction species that are in the
+    biochemical reaction network that contains the Reaction
+    object. The reactants and products that participate in
+    this particular Reaction are a subset of the entityList,
+    but they often do not form the whole entityList.
+
+    This parameter is helpful for this function because it
+    allows the Reaction to return its changes to reactants
+    and products in a list/vector that will be easily used
+    in the context of the Reaction object's containing
+    ReactionFlask
+
+    Outputs:
+
+    None
+    
+    '''
 
     #1: Set up vectors that are the length of the entity list
     # to catalog the number of the different reactants and
@@ -192,7 +266,19 @@ class Reaction():
     '''This function parses the reactants and
     products dictionaries to provide lists of
     the namestrings for the reactants and
-    products involved in the reaction.'''
+    products involved in the reaction.
+    
+    Inputs:
+
+    self (Reaction) : the Reaction object that is
+    parsing/computing the species involved in its
+    reaction, obtaining lists to facilitate computing
+    the changes in reactants and products
+    
+    Outputs:
+
+    None
+    '''
 
     #1. List of the string name of reactants is generated
     #from the keys of the reactants dictionary
@@ -206,7 +292,7 @@ class Reaction():
 
   def computeRxnRate(self : Reaction, 
                      entityList : list[str], 
-                     y : list[float]) -> float:
+                     y : SystemState) -> float:
     '''Given a reaction aA + bB -> cC, the rate
       at which the reaction happens over time
       is given by mass-action kinetics, assuming
@@ -216,7 +302,37 @@ class Reaction():
       rate = k_rxn * [A]^a * [B]^b
       
       This function computes and returns the value
-      of rate.'''
+      of rate.
+      
+      Inputs:
+
+      self (Reaction) : the Reaction that is computing
+      its reaction rate in order to make that available
+      to its containing ReactionFlask
+
+      entityList (list of strings) : a list containing the
+      namestring of the reaction species that are in the
+      biochemical reaction network that contains the Reaction
+      object. The reactants and products that participate in
+      this particular Reaction are a subset of the entityList,
+      but they often do not form the whole entityList.
+
+      This parameter is very useful in this function, because
+      it allows the Reaction object to obtain information about
+      the concentration of its reactants and its products within
+      the containing ReactionFlask at the time of function call.
+
+      y (list of floats/SystemState) : the state of the
+      ReactionFlask containing the Reaction object at time of
+      function call. The concentrations in this list are directly
+      used in computing the Reaction object's reaction rate.
+
+      Outputs:
+
+      rxnRate (float) : the rate of reaction in units 1 / time 
+
+      
+      '''
     
     #1. While we could also initialize the variable to
     # return, rxnRate, with the first concentration,
@@ -234,7 +350,8 @@ class Reaction():
 
     for reactant in self._reactantsDict:
       #2a. Retrieve index of reactant in entity list b/c
-      # entityList is a list of reactant names
+      # entityList is a list of reactant names with the
+      # same structure as y 
 
       idx = entityList.index(reactant)
 

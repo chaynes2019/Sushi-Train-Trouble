@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
-import re
 
 from reactionTest import Reaction
 
@@ -60,7 +59,31 @@ class ReactionFlask():
     
     While the components feature makes graphing the
     output of the ReactionFlask much easier, it has
-    no bearing on the simulation of the system itself.'''
+    no bearing on the simulation of the system itself.
+    
+    Inputs:
+
+    self (ReactionFlask): the ReactionFlask that
+    is being constructed
+
+    entityList (list of strings): a list of the
+    names of the reaction species as strings.
+    Generally, abbreviated forms of the names
+    of reaction species or single letters will
+    work best.
+
+    components (dictionary of lists): a dictionary
+    mapping names of system "components" to the
+    subsets of reaction species forming those
+    components. These will then be used to define
+    which subsets of reaction species are graphed
+    together when plotSystem() is run
+
+    Outputs:
+
+    None
+
+    '''
 
     #The following commands check the entity list and
     # components inputs for any erroneous data types
@@ -122,7 +145,24 @@ class ReactionFlask():
     of one of the system's species changed the outcome,
     one could call this function with the new initial
     condition within each loop, without having to create
-    a new ReactionFlask object.'''
+    a new ReactionFlask object.
+
+    Inputs:
+    
+    self (ReactionFlask) : the ReactionFlask object whose
+    initial condition is being set
+
+    y0 (list of floats/SystemState) : the initial state of
+    the system, formatted perfectly for use in the solveIVP
+    function of scipy.integrate in runSystem(). Each element
+    is the initial concentration of the corresponding
+    reaction species. Units are not specified here, so these
+    values can take on units based on model parametrization.
+
+    Outputs:
+
+    None
+    '''
 
     #Prevent y0 from having type None
     if y0 == None:
@@ -177,7 +217,17 @@ class ReactionFlask():
     reinitialize the system. This is useful to call when
     one is running the system repeatedly with the same
     initial conditions, perhaps changing the value of a
-    parameter on each iteration.'''
+    parameter on each iteration.
+    
+    Inputs:
+
+    self (ReactionFlask) : the ReactionFlask whose
+    initial condition is being reset
+
+    Outputs:
+
+    None
+    '''
 
     try:
       if self._initialCondition == None:
@@ -203,7 +253,54 @@ class ReactionFlask():
     '''This function adds a new Reaction object
     to the ReactionFlask's reactions dictionary.
     It first performs input checking before
-    instantiating the new object.'''
+    instantiating the new object.
+    
+    Inputs:
+
+    self (ReactionFlask) : the ReactionFlask that the
+    Reaction object is being added to
+
+    name (str) : the namestring of the reaction. It
+    is often helpful to write out the reaction equation
+    for the reaction being modeled, and then, one uses 
+    that reaction equation as the reaction name.
+    For example, nameRxn = "A + B -> C"
+
+    rxnK (float) : the reaction rate constant. This
+    value defines how fast the reaction proceeds for
+    every given concentration tuple of the reactants.
+    In the mass-action kinetics term corresponding to
+    the reaction "A + B -> ?", k_rxn * [A]^a * [B]^b,
+    the reaction rate constant is k_rxn. The value of
+    this constant is related to the thermodynamic
+    properties of the reaction and how spontaneously
+    it occurs. If the change in Gibbs free energy between
+    the reactants and products is known, this value can
+    be explicitly calculated as 
+    
+    k_rxn = e^(-(deltaGibbs) / RT)
+
+
+    reactantsDict (dictionary, str -> int/float) : this
+    dictionary contains the namestrings of the reactants
+    as keys and the multiplicities of those reactants as
+    values. Thus, for example, "2A + B -> 3C" would become
+
+    {'A' : 2, 'B' : 1}
+
+
+    productsDict (dictionary, str -> int/float) : this
+    dictionary contains the namestrings of the products
+    as keys and the multiplicities of those products as
+    values. Thus, for example, "2A + B -> 3C" would become
+
+    {'C' : 3}
+
+    Outputs:
+
+    None
+
+    '''
     
     #The list of reactant names is generated
     # from the keys of the reactants dictionary
@@ -245,7 +342,30 @@ class ReactionFlask():
     this function for each one. computeReactionRates()
     is called at each timestep during reactionDeriv(),
     and it forms an essential step of simulating the
-    reaction network.'''
+    reaction network.
+    
+    Inputs:
+
+    self (ReactionFlask) : the ReactionFlask that is
+    having its Reaction objects compute their reaction
+    rates
+
+    y (list of floats/SystemState) : this is a list of
+    the concentrations of reaction species, maintained
+    in the same order as the entity list and initial
+    condition. This provides an input for reactionDeriv()
+    and enables the Reaction objects to accurately
+    compute reaction rates based on the species
+    concentration values at the present moment.
+
+    Outputs:
+
+    reactionRates (list of floats) : the reaction rates
+    computed from each of the system's reactions, in the
+    same order that the Reaction objects are stored in
+    the reactants dictionary
+    
+    '''
 
     #To iterate through the reaction objects themselves
     # one must use the reactions dictionary values
@@ -276,7 +396,35 @@ class ReactionFlask():
     by each reaction to compute the contribution
     of that reaction to the derivative vector.
     This function can then be called by an
-    ODE solver, like scipy.integrate's solveIVP().'''
+    ODE solver, like scipy.integrate's solveIVP().
+    
+    Inputs:
+
+    self (ReactionFlask) : the ReactionFlask that
+    is computing its reaction derivative
+
+
+    t (float) : the current time elapsed during
+    the simulation
+
+    y (list of floats/SystemState) : this is a list of
+    the concentrations of reaction species, maintained
+    in the same order as the entity list and initial
+    condition. This provides an input for reactionDeriv()
+    and enables the Reaction objects to accurately
+    compute reaction rates based on the species
+    concentration values at the present moment.
+
+    Outputs:
+
+    derivative (list of floats) : the derivative of the
+    biochemical reaction network, expressed as an
+    Ordinary Differential Equation. This value can be
+    used in an ODE Solver, such as scipy.integrate's
+    solveIVP function, to simulate the system forward
+    in time.
+    
+    '''
 
     #0: Check inputs for non-negativity
     if t < 0:
@@ -352,7 +500,7 @@ class ReactionFlask():
     return derivative
 
   def runSystem(self : ReactionFlask, 
-                timeEndpoint : list[float]) -> None:
+                timeEndpoint : float) -> None:
     '''This function gets the simulation of the
     reaction network underway. After ensuring that
     the system has been properly initialized, it calls
@@ -363,7 +511,24 @@ class ReactionFlask():
     
     At this point, after assembling the ReactionFlask
     by using the abstracted tools provided above, calling
-    this function should be easy!'''
+    this function should be easy!
+
+    Inputs:
+    
+    self (ReactionFlask) : the ReactionFlask that is
+    running a simulation of its biochemical reaction
+    network
+
+    timeEndpoint (float) : the time elapsed during
+    simulation when the ODE solver should stop
+    integrating the system forward and the simulation
+    ends
+
+    Outputs:
+
+    None
+
+    '''
 
     #Ensure timeEndpoint >= 0
     if timeEndpoint < 0:
@@ -406,6 +571,8 @@ class ReactionFlask():
     be plotted together, with a legend automatically
     generated.
 
+    Inputs:
+
     self (ReactionFlask): the ReactionFlask that
     has simulated the system with the reaction
     species and contains data on its temporal
@@ -424,6 +591,10 @@ class ReactionFlask():
     rightEdgeOfPlots (float): defines the position on the
     left-right axis of the canvas where the plot array
     will end
+
+    Outputs:
+
+    None
     '''
 
     #0: Grab time values from simulation
@@ -482,19 +653,26 @@ class ReactionFlask():
                              species : str) -> float:
     '''This function retrieves the final value
     for any system reaction species: the user
-    simply inputs the string name of the species
+    simply inputs the namestring of the species
     and the function does the rest.
     
     This function can be particularly helpful for
     steady state analyses.
+
+    Inputs:
     
     self (ReactionFlask): the ReactionFlask that
     has simulated the system with the reaction
     species and contains data on its temporal
     dynamics
 
-    species (str): the string name of the reaction
+    species (str): the namestring of the reaction
     species whose final value is being accessed
+
+    Outputs:
+
+    finalValue (float) : the value of the specified
+    reaction species at the end of the simulation
     '''
 
     #Ensure that system has been run
@@ -521,20 +699,93 @@ class ReactionFlask():
     timeseries = self.latestSimulationOutput["y"][speciesIdx]
 
     #3. Return final value
-    return timeseries[-1]
+    finalValue = timeseries[-1]
+    return finalValue
 
-  def modifyReaction(self, rxnName, newRxnRate = None, newRxnReactantsDict = None, newRxnProductsDict = None):
+  def modifyReaction(self : ReactionFlask, 
+                     rxnName : str, 
+                     newRxnRate : float = None, 
+                     newRxnReactantsDict : dict[str : float] = None, 
+                     newRxnProductsDict : dict[str : float] = None) -> None:
+    '''After adding a Reaction object to a ReactionFlask,
+    it is sometimes necessary to modify the Reaction object
+    at runtime. This is particularly the case when one is
+    simulating the ReactionFlask for many different values
+    of a parameter, such as a reaction rate. In this case,
+    modifyReaction() would be called once per iteration to
+    update the reaction to have the new parameter value.
+    
+    It can also be used to update the reactants and products
+    that are involved in a reaction as well as their
+    multiplicities. It is hoped that this offers a flexible
+    set of options for experimentation.
+    
+    Inputs:
+
+    self (ReactionFlask) : the ReactionFlask containing the 
+    Reaction object that is being modified
+
+    rxnName (str) : the namestring of the Reaction object and
+    the key for that Reaction object in the _reactions dictionary
+
+    newRxnRate (float) : the new reaction rate that is desired for
+    the Reaction in question. If none is specified, the reaction
+    rate of the Reaction will be left unchanged.
+
+    newRxnReactantsDict (dictionary, str -> float) : the new
+    reactants dictionary that is desired for the Reaction
+    in question. It can be different than the original in
+    reactants involved, their multiplicities, or both. If
+    none is specified, the reactants dictionary of the
+    Reaction will be left unchanged.
+
+    newRxnProductsDict (dictionary, str -> float) : the new
+    products dictionary that is desired for the Reaction
+    in question. It can be different than the original in
+    products involved, their multiplicities, or both. If
+    none is specified, the products dictionary of the
+    Reaction will be left unchanged.
+
+    Outputs:
+
+    None
+    
+    '''
+
+    #Obtain the Reaction object that is to be
+    # modified by using its namestring as a key
+    # in the _reactions dictionary 
     reactionInQuestion = self._reactions[rxnName]
 
+
+    #If no new reaction rate has been specified,
+    # leave the original. If one has been given, 
+    # replace the original with the new. 
     if newRxnRate != None:
       reactionInQuestion._rxnK = newRxnRate
 
+    #If no new reactants dictionary has been specified,
+    # leave the original. If one has been given,
+    # replace the original with the new 
     if newRxnReactantsDict != None:
       reactionInQuestion._reactantsDict = newRxnReactantsDict
+
+      #Because the reaction species and changes in
+      # reactants involves the reactantsDict, these
+      # need to be recomputed before the ReactionFlask
+      # can be run again 
       reactionInQuestion.computeReactionSpecies()
       reactionInQuestion.computeChanges(self._entityList)
 
+    #If no new products dictionary has been specified,
+    # leave the original. If one has been given,
+    # replace the original with the new 
     if newRxnProductsDict != None:
       reactionInQuestion._productsDict = newRxnProductsDict
+
+      #Because the reaction species and changes in
+      # products involves the productsDict, these
+      # need to be recomputed before the ReactionFlask
+      # can be run again 
       reactionInQuestion.computeReactionSpecies()
       reactionInQuestion.computeChanges(self._entityList)

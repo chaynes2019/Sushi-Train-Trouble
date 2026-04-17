@@ -266,7 +266,7 @@ class ReactionFlask():
 
   def reactionDeriv(self : ReactionFlask, 
                     t : float, 
-                    y : SystemState):
+                    y : SystemState) -> list[float]:
     '''This function forms the heart of the
     ReactionFlask class. It uses the abstracted
     Reaction objects to form, piece-by-piece,
@@ -389,7 +389,43 @@ class ReactionFlask():
         )
       )
 
-  def plotSystem(self, widthSpacing = 0.5, heightSpacing = 0.5, leftEdgeOfPlots = None, rightEdgeOfPlots = None, numberRows = 1):
+  def plotSystem(self : ReactionFlask, 
+                 widthSpacing : float = 0.5, 
+                 heightSpacing : float = 0.5, 
+                 leftEdgeOfPlots : float = None, 
+                 rightEdgeOfPlots : float = None) -> None:
+    '''After running the system, the user can call
+    this function to automatically plot the results.
+    It will generate #components plots, each with time
+    on the x-axis and concentration on the y-axis. By
+    default, these are sized so that several can be fit
+    into one row, but the sizing of each can be edited
+    using the parameters.
+
+    The entities listed together in each component will
+    be plotted together, with a legend automatically
+    generated.
+
+    self (ReactionFlask): the ReactionFlask that
+    has simulated the system with the reaction
+    species and contains data on its temporal
+    dynamics
+    
+    widthSpacing (float): changes the horizontal spacing
+    between consecutive plots
+    
+    heightSpacing (float): changes the vertical spacing
+    between consecutive plots
+    
+    leftEdgeOfPlots (float): defines the position on the
+    left-right axis of the canvas where the plot array
+    will begin
+    
+    rightEdgeOfPlots (float): defines the position on the
+    left-right axis of the canvas where the plot array
+    will end
+    '''
+
     #0: Grab time values from simulation
     tVals = self.latestSimulationOutput["t"]
 
@@ -442,13 +478,47 @@ class ReactionFlask():
     #3b. Display plot.
     plt.show()
 
-  def getFinalValueOfVariable(self, variable):
-    #1. Retrieve Index of variable in the simulation output
+  def getFinalValueOfSpecies(self : ReactionFlask, 
+                             species : str) -> float:
+    '''This function retrieves the final value
+    for any system reaction species: the user
+    simply inputs the string name of the species
+    and the function does the rest.
+    
+    This function can be particularly helpful for
+    steady state analyses.
+    
+    self (ReactionFlask): the ReactionFlask that
+    has simulated the system with the reaction
+    species and contains data on its temporal
+    dynamics
+
+    species (str): the string name of the reaction
+    species whose final value is being accessed
+    '''
+
+    #Ensure that system has been run
+    
+    if self.latestSimulationOutput == None:
+      raise(
+        AttributeError(
+          "Reaction flask has not yet been run"
+        )
+      )
+
+    #1. Retrieve Index of species in the simulation output
     # through its index in the entity list
-    variableIdx = self._entityList.index(variable)
+    try:
+      speciesIdx = self._entityList.index(species)
+    except(ValueError):
+      raise(
+        ValueError(
+          "Requested reaction species is not in the entity list"
+        )
+      )
 
     #2. Retrieve timeseries in question from simulation output
-    timeseries = self.latestSimulationOutput["y"][variableIdx]
+    timeseries = self.latestSimulationOutput["y"][speciesIdx]
 
     #3. Return final value
     return timeseries[-1]

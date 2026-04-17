@@ -5,6 +5,7 @@ import re
 
 from reactionTest import Reaction
 
+type SystemState = list[float]
 
 class ReactionFlask():
   '''Implementing biochemical reaction network
@@ -107,7 +108,7 @@ class ReactionFlask():
     self.latestSimulationOutput = None
 
   def setInitialCondition(self : ReactionFlask, 
-                          y0 : list[float]) -> None:
+                          y0 : SystemState) -> None:
     '''This function takes in an initial condition for
     the biochemical reaction network in the form of a
     list of values, each one corresponding to a species
@@ -235,19 +236,68 @@ class ReactionFlask():
     #Add the new Reaction object
     self._reactions[name] = Reaction(self._entityList, name, rxnK, reactantsDict, productsDict)
 
-  def computeReactionRates(self, y):
-    #Because the reactions member is now a dictionary,
-    #to iterate through the reactions, one now must
-    #use the values
+  def computeReactionRates(self : ReactionFlask, 
+                           y : SystemState) -> list[float]:
+    '''Each Reaction object includes a function to
+    compute its reaction rate according to mass-action
+    kinetics. Now, this function will iterate through
+    the Reaction objects of the ReactionFlask and call
+    this function for each one. computeReactionRates()
+    is called at each timestep during reactionDeriv(),
+    and it forms an essential step of simulating the
+    reaction network.'''
+
+    #To iterate through the reaction objects themselves
+    # one must use the reactions dictionary values
     reactionObjects = self._reactions.values()
 
+    #Initialize an empty numpy array to hold the
+    # computed reaction rates 
     reactionRates = np.zeros(len(reactionObjects))
+
+    #Call each Reaction object's computeRxnRate function
+    # and store the result. By using enumerate, we ensure
+    #that we iterate through the reactionObjects in a 
+    # repeatable order
     for k, rxn in enumerate(reactionObjects):
       reactionRates[k] = rxn.computeRxnRate(self._entityList, y)
-
+    
     return reactionRates
 
-  def reactionDeriv(self, t, y):
+  def reactionDeriv(self : ReactionFlask, 
+                    t : float, 
+                    y : SystemState):
+    '''This function forms the heart of the
+    ReactionFlask class. It uses the abstracted
+    Reaction objects to form, piece-by-piece,
+    the derivative of the system. It computes
+    all of the reaction rates and then uses
+    the changes in reactants and products reported
+    by each reaction to compute the contribution
+    of that reaction to the derivative vector.
+    This function can then be called by an
+    ODE solver, like scipy.integrate's solveIVP().'''
+
+    #0: Check inputs for non-negativity
+    if t < 0:
+      raise(
+        ValueError(
+          "Input time has a negative value"
+        )
+      )
+    
+    for k, yVal in enumerate(y):
+      #If the value is negative and large enough
+      # that it is unlikely to have originated
+      # from float arithmetic errors, then there's
+      # an issue  
+      if yVal < 0 and abs(yVal) > 0.01:
+        raise(
+          ValueError(
+            f"Element {k} of the y vector is negative = {yVal}"
+          )
+        )
+
     #1: Set up receptacle for derivative values
     derivative = np.zeros(len(self._concentrations))
 
@@ -258,88 +308,86 @@ class ReactionFlask():
     #3: For each reaction, go to each reactant
     #  and add the change (# / s) to its respective derivative
 
-    #Because the reactions member is a dictionary,
-    #to iterate through the reactions, one now must
-    #use the values
+    #To iterate through the reaction objects themselves
+    # one must use the reactions dictionary values
     reactionObjects = self._reactions.values()
 
+    #Loop through the Reaction objects and compute 
+    # its contribution to the reaction derivative
     for rxnIdx, rxn in enumerate(reactionObjects):
-      if(rxn._name == "Reaction 30: M_empty + g * phi -> M_ePhi"):
-        print(f"Reaction Rate = {rxn.computeRxnRate(self._entityList, y)}")
-
+      #Obtain the changes in reactants and products
       reactantChanges = rxn._changes[0]
       productChanges = rxn._changes[1]
 
+      #Loop through each reactant and compute the
+      # reaction's mass-action term in the reactant's
+      # differential equation
       for reactant in rxn._reactants:
         idx = self._entityList.index(reactant)
 
-        #The change in reactants reported in the first element of the changes vector,
-        # which can then be used, through the index obtained from the entityList,
-        # to have the right reaction rate in the concentration
+        #The mass-action term in the reactant's differential
+        # equation will be of the form reactantChange * reactionRate 
         derivativeChange = -reactantChanges[idx] * rxnRates[rxnIdx]
-        if(rxn._name == "Test Rxn: A + B -> C"):
-          print(f"Reactant Changes = {-reactantChanges[idx]}")
+
+        #By using the idx of the reactant, the mass-action term
+        # can be added to the differential equation for the 
+        # reactant, specifically 
         derivative[idx] = derivative[idx] + derivativeChange
 
+      #Loop through each product and compute the
+      # reaction's mass-action term in the product's
+      # differential equation
       for product in rxn._products:
         idx = self._entityList.index(product)
 
-        #The net change is reported in the netChanges vector, which can then
-        # be used, through the index obtained from the entityList, to have
-        # the right reaction rate in the concentration
+        #The mass-action term in the product's differential
+        # equation will be of the form productChange * reactionRate 
         derivativeChange = productChanges[idx] * rxnRates[rxnIdx]
-        if(rxn._name == "Test Rxn: A + B -> C"):
-          print(f"Product Change = {productChanges[idx]}")
+
+        #By using the idx of the product, the mass-action term
+        # can be added to the differential equation for the 
+        # product, specifically 
         derivative[idx] = derivative[idx] + derivativeChange
 
     return derivative
 
-  def runSystem(self, timeEndpoint, fromSteadyState = False):
-    if fromSteadyState:
-      if self._concentrationsInitialized == True:
-        #1: Reset flag to show that concentrations are no longer
-        #at initial values
-        self._concentrationsInitialized = False
+  def runSystem(self : ReactionFlask, 
+                timeEndpoint : list[float]) -> None:
+    '''This function gets the simulation of the
+    reaction network underway. After ensuring that
+    the system has been properly initialized, it calls
+    scipy.integrate's solveIVP function to simulate
+    the BRN forward in time, calling reactionDeriv()
+    as the system derivative, until a specified time
+    endpoint.
+    
+    At this point, after assembling the ReactionFlask
+    by using the abstracted tools provided above, calling
+    this function should be easy!'''
 
-        #2: Run initial value problem for specified time length
-        #First, get the wound size for later, and then remove the
-        #wound from the initial condition
-        perturbationValue = self._concentrations[0]
+    #Ensure timeEndpoint >= 0
+    if timeEndpoint < 0:
+      raise(
+        ValueError(
+          "Specified time endpoint is negative!"
+        )
+      )
 
-        self._concentrations[0] -= perturbationValue
+    #Check to see if system has been properly initialized
+    if self._concentrationsInitialized == True:
+      #1: Reset flag to show that concentrations are no longer
+      #at initial values
+      self._concentrationsInitialized = False
 
-        simulationOutput = solve_ivp(self.reactionDeriv, [0, 1000], self._concentrations)
-
-        newInitialCondition = [simulationOutput["y"][k][-1] for k in range(len(self._entityList))]
-
-        if(abs(newInitialCondition[0]) > 0.00001):
-          print("Something's wrong with the 0-indexed variable: it can't be a perturbation, because the system is changing it from zero")
-        else:
-          newInitialCondition[0] = perturbationValue
-
-        newSimulationOutput = solve_ivp(self.reactionDeriv, [0, timeEndpoint], newInitialCondition)
-
-        newSimulationOutput["t"] += 1000
-
-        self.latestSimulationOutput = {}
-
-        self.latestSimulationOutput["t"] = [simulationOutput["t"][i] for i in range(len(simulationOutput["t"]) - 1)] + [newSimulationOutput["t"][i] for i in range(len(newSimulationOutput["t"]))]
-
-        timeSeriesOutputs = [[simulationOutput["y"][k][i] for i in range(len(simulationOutput["y"][k]) - 1)] + [newSimulationOutput["y"][k][i] for i in range(len(newSimulationOutput["y"][k]))] for k in range(len(self._entityList))]
-
-        self.latestSimulationOutput["y"] = timeSeriesOutputs
+      #2: Run initial value problem for specified time length
+      self.latestSimulationOutput = solve_ivp(self.reactionDeriv, [0, timeEndpoint], self._concentrations)
 
     else:
-      if self._concentrationsInitialized == True:
-        #1: Reset flag to show that concentrations are no longer
-        #at initial values
-        self._concentrationsInitialized = False
-
-        #2: Run initial value problem for specified time length
-        self.latestSimulationOutput = solve_ivp(self.reactionDeriv, [0, timeEndpoint], self._concentrations)
-
-      else:
-        print("Please initialize reaction concentrations and try again.")
+      raise(
+        AttributeError(
+          "Reaction flask has not yet been initialized. Please initialize before running."
+        )
+      )
 
   def plotSystem(self, widthSpacing = 0.5, heightSpacing = 0.5, leftEdgeOfPlots = None, rightEdgeOfPlots = None, numberRows = 1):
     #0: Grab time values from simulation
